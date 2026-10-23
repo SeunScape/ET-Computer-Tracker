@@ -230,3 +230,23 @@ mock implementing C.3 (page size 2 to exercise Load more). Covers walkthrough te
 new-password challenge, already-signed-in redirect, required-field validation, desktop → N/A,
 API 500, network failure, 401 mid-session. Result: **21/21 passed**, no unexpected console errors.
 This verifies the frontend against the contract; it does not replace Phase 6 against the live API.
+
+## Phase 5 – Hardening and clean-up (2026-10-23)
+
+- `innerHTML`, `insertAdjacentHTML`, `outerHTML`, `document.write`, `eval`, `new Function`: **none**
+  in `site/js` or the pages. All API data goes in through `textContent`, `value` or attributes
+  (`layout.js` `el()`), and the `<b>test</b>` check passes.
+- No inline `style` attributes, inline scripts or `on…=` handlers in the pages (makes a strict
+  Content-Security-Policy possible later).
+- Console: no `console.log`. Two `console.error` calls remain: sign-out failure (logs the error
+  name only) and QR drawing failure. No tokens, passwords or job objects are logged.
+- Every `<button>` has an explicit `type`; every input/textarea has an associated `<label>`
+  (checked in the browser on all five pages). "Other items received" now uses a visually hidden
+  `<label>` instead of `aria-label`.
+- Titles: "Staff login", "Dashboard", "New intake", "Job ETC-XXXX" (set after load), "Photos for
+  ETC-XXXX" (set after load), each with "· ET Computers".
+- Deleted (approved by the repo owner): `site/Saved.dc.html`, `site.zip` (also contained the real
+  `.env`), `site/js/Saved.js`, `site/js/index.js` (both empty). Removed unused `.btn-ghost` CSS.
+- `README.md` rewritten (was UTF-16 with only the title): prerequisites, `.env` setup with where
+  each AWS value comes from, `npm install`, `dev`, `build`, `preview`.
+- `npm audit`: 0 vulnerabilities.

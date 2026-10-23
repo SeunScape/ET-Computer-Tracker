@@ -99,7 +99,6 @@ a:hover { color: var(--link-hover); }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 8px; border: 0; box-sizing: border-box; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
 .btn-primary, .btn-primary:hover { background: var(--blue); color: #FFFFFF; }
 .btn-secondary, .btn-secondary:hover { border: 1px solid var(--field); background: #FFFFFF; color: var(--ink-2); font-weight: 500; }
-.btn-ghost, .btn-ghost:hover { background: transparent; color: var(--ink-2); font-weight: 500; }
 .btn-sm { height: 40px; padding: 0 14px; font-size: 13px; }
 .btn-lg { height: 48px; font-size: 15px; }
 .btn-block { display: flex; width: 100%; }

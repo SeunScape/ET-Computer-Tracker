@@ -158,7 +158,8 @@ Arrival: <strong id="arrival-time"></strong> <span class="muted">(set automatica
 <label class="choice pill"><input type="checkbox" name="accessories" value="SPARE_BATTERY"><span class="acc-mark" aria-hidden="true"></span> Spare battery</label>
 <label class="choice pill"><input type="checkbox" name="accessories" value="POWER_CABLE"><span class="acc-mark" aria-hidden="true"></span> Power cable</label>
 </div>
-<input name="accessoriesOther" type="text" class="input" aria-label="Other items received" placeholder="Other items received (e.g. external drive, sleeve)" autocomplete="off">
+<label for="accessories-other" class="sr-only">Other items received</label>
+<input id="accessories-other" name="accessoriesOther" type="text" class="input" placeholder="Other items received (e.g. external drive, sleeve)" autocomplete="off">
 </fieldset>
 <label class="field">Condition notes<textarea name="conditionNotes" rows="2" class="textarea" placeholder="Anything unusual: stickers, missing screws, previous repairs…"></textarea></label>
 </section>
