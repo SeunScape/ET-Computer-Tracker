@@ -250,3 +250,33 @@ This verifies the frontend against the contract; it does not replace Phase 6 aga
 - `README.md` rewritten (was UTF-16 with only the title): prerequisites, `.env` setup with where
   each AWS value comes from, `npm install`, `dev`, `build`, `preview`.
 - `npm audit`: 0 vulnerabilities.
+
+## Phase 6 – Verification against the live API (to be filled in)
+
+Needs: Part E1 done in AWS (incl. CORS for `http://localhost:5173` and `http://localhost:4173`),
+a filled-in `site/.env`, and a staff login. Run with `npm run dev`, then again with
+`npm run build && npm run preview`. Test jobs created here must be deleted before go-live (E2).
+
+Tester: ________  Date: ________  Mode: dev / preview
+
+| # | Test | Expected | Result (pass/fail + notes) |
+|---|---|---|---|
+| 1 | Open any page while logged out | Redirected to login | |
+| 2 | Wrong password | "Incorrect email or password" | |
+| 3 | Correct login | Dashboard shows real jobs and counts | |
+| 4 | Each status filter, including Delivered + Load more | Correct jobs only | |
+| 5 | Search: `etc-1`, a phone number in local format, part of a name, 1 character | Correct results; 1 character shows the hint, no API call | |
+| 6 | Register a device with valid data | Lands on new job page with next ETC number; counts updated on dashboard | |
+| 7 | Register with an invalid phone (`12345`) | Server message shown; form input kept | |
+| 8 | Double-click Register | Only one job created | |
+| 9 | Change status + promised date + diagnosis, Save | Values saved; three history entries | |
+| 10 | Open the same job in two tabs, save in tab A, then save in tab B | Tab B shows the conflict message and reloads | |
+| 11 | Unknown ticket `job.html?ticket=ETC-9999` | "Job not found" | |
+| 12 | Name containing `<b>test</b>` | Shown as plain text, not bold | |
+| 13 | Photos page at 390px width | Readable, no horizontal scroll | |
+| 14 | Log out, press browser Back | Redirected to login | |
+
+Also record:
+- History wording after test 9: do the entries read as sentences, or as raw type names? Note the
+  real `activity[].type` values (browser DevTools → Network → the `GET /jobs/…` response).
+- Any CORS errors in the browser console (these point to API Gateway CORS settings, not the code).
