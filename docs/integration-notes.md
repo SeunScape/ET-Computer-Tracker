@@ -160,3 +160,34 @@ unused and left until deletion is confirmed.
   "Dashboard"); it could become the Delivered/history view later.
 - Intake defaults: device type defaults to Laptop (as in the design). Condition rows have **no**
   default, so staff must actively choose each one; the design's pre-selected values were sample data.
+
+## Phase 3 – Shared modules (2026-10-23)
+
+### `js/auth.js`
+- Fails fast with a clear message if any `VITE_*` value is missing; trailing `/` on `VITE_API_URL` is tolerated.
+- `api(path, { method, body, signal })`: `body` is a plain object sent as JSON (`Content-Type` only
+  when there is a body). Errors are `ApiError` with `.status` (HTTP status, or `0` for a network
+  failure) and the server's `message`; non-JSON or empty error bodies get a sensible default
+  message; network failures say "Cannot reach the server. Check your internet connection."
+- `401`, a missing token or an expired session → `location.replace("/login.html?next=<current page>")`
+  and the returned promise never settles, so the page stops without showing an error.
+- `requireLogin()` resolves with the Amplify user or redirects and never resolves. It also re-checks
+  the session when a page is restored from the back/forward cache (walkthrough test 14).
+- `login()` maps Cognito errors to user messages ("Incorrect email or password" for wrong
+  credentials), handles `CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED` with the admin message, and
+  treats "already signed in" as success. After login it returns to `?next=` (same-site paths only),
+  so scanning the job QR on a logged-out phone ends up on the photos page after signing in.
+- New `redirectIfSignedIn()` for the login page. `logout()` always ends on the login page.
+
+### `js/labels.js`, `js/format.js`
+- `labels.js`: maps for every enumeration in C.3, `CONDITION_FIELDS` (row order/labels), `label(code)`.
+- `format.js`: `formatDateTime`, `formatDate` (year shown only when not the current year),
+  `formatLongDate`, `todayInLagos`, `maskPhone`, plus `formatPhone` for the full number on the job page.
+  All use `Africa/Lagos` and `en-NG`.
+- Not applicable: there were no duplicated maps in `dashboard.js`/`job.js` (files were empty);
+  `job.js` will use `err.status === 409` from the start (Phase 4).
+
+### Tests run
+- 24 assertions on `format.js`/`labels.js` (Lagos midnight boundary, invalid dates, phone formats).
+- 17 scenarios on `auth.js` with Amplify stubbed and `fetch` mocked (200/201, 400, 404 empty body,
+  409, 502 HTML body, network failure, 401, no token, login errors/challenge/redirects, logout offline).
