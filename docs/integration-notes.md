@@ -100,3 +100,63 @@ Notifications are not built (Part E3), but the designs say they are:
 | `site.zip` | Older copy of the whole `site/` folder (CRLF line endings), including `.env`. |
 
 Environment: Node v22.23.1, npm 10.9.8.
+
+## Phase 2 – Tooling and page conversion (2026-10-23)
+
+Decisions confirmed by the repo owner after Checkpoint 1:
+- Rebuild the design exports as plain HTML (option a). Layout, colours, fonts and copy are kept;
+  the design tool's runtime and embedded React are dropped.
+- Rename pages to the plan's names; the "Device registered" page is folded into `job.html?new=1`.
+- Notification wording is removed for now (notifications come after the CRUD app).
+
+### Project layout
+- `package.json` and `vite.config.js` are at the repo root; Vite's `root` is `site/`, so
+  `.env`, `.env.example` and `public/` live in `site/`. Build output goes to `dist/` at the repo root.
+- `package.json`: added `preview` script, `"type": "module"`, `"private": true`; fixed the garbled
+  `description` and the name. `vite.config.js`: real file names, `build.target: "es2022"`.
+- `.gitignore`: `node_modules/`, `dist/`, `.env`, `.env.*`, `!.env.example`, `.DS_Store`.
+- `site/.env` removed from git tracking (file kept locally). Its values are still in git history
+  and in `site.zip`, so the app client should be rotated (added to the AWS task list).
+- `define: { global: "globalThis" }` was **not** needed: a page importing `auth.js` (Amplify v6)
+  loads in Chrome with no console errors, and the build succeeds.
+- Fonts: the latin subsets of IBM Plex Sans (variable, 400–600) and IBM Plex Mono (400, 500) were
+  extracted from the export into `site/fonts/` and are self-hosted. Non-latin text falls back to
+  `system-ui` (the export loaded those subsets from Google Fonts).
+- No files are referenced only from JavaScript, so `site/public/` is not needed yet.
+
+### HTML changes (rule 9)
+
+All styling moved from inline `style` attributes to `site/css/styles.css`, with the same values.
+State that the export computed in JavaScript (selected pill, active filter, status colours) is now
+expressed in CSS through `:checked`, `aria-pressed` and `data-status="<CODE>"`.
+
+| Old file | New file | Changes |
+|---|---|---|
+| `Login.dc.html` (+ duplicate `index.html`) | `login.html` | `form#login-form`; `input#email[name=email]`, `input#password[name=password]` with `required`; "Sign in" link → `button#submit[type=submit]`; added `#error` |
+| `Main.dc.html` | `index.html` | Search wrapped in `form#search-form[role=search]` with `input#search[name=q]` and a real `<label>`; `#search-hint`; stat cards `button.stat[data-status][aria-pressed]` with `[data-count=<CODE>]`; filter chips `button.chip[data-filter=<CODE or "">]`; `tbody#job-rows`; `#shown`; `#error`; added `#load-more` (hidden); `#today`; sample rows, counts and date removed |
+| `Intake.dc.html` | `intake.html` | Whole page is `form#intake-form`; every input has the API field `name` (`customerName`, `customerPhone`, `customerEmail`, `deviceName`, `deviceType`, `serialNumber`, `modelNumber`, `specs.ram`, `specs.storage`, `specs.processor`, `specs.screenSize`, `condition.<key>`, `accessories`, `accessoriesOther`, `conditionNotes`, `reportedFault`, `promisedDate`); device type / condition / accessories pills are now visually-hidden radio/checkbox inputs with **code** values inside the pill labels; `required` on required fields; "Register device" → `button#submit[type=submit]`; `#error`; `#arrival-time` |
+| `JobDetail.dc.html` | `job.html` | `#loading`, `#error`, `#not-found`, `#job` (hidden until loaded), `#notice` (new-job message); ids for every value (`#ticket`, `#status-badge`, `#summary`, `#reported-fault`, `#diagnosed-fault`, `#specs`, `#accessories`, `#condition-notes`, `#customer-name`, `#customer-phone`, `#customer-email`, `#history`, `#status-note`, `#promised-date`, `#photo-count`); status buttons → `input[name=status]` radios; Save → `button#save[type=submit]` in `form#job-form`; "Show QR to add from phone" now toggles an inline `canvas#qr` (`#qr-box`, `#qr-url`) instead of linking to the photos page |
+| `Phone.dc.html` | `photos.html` | Fixed 390×844 preview frame → responsive column (max 480px); `#loading`, `#error`, `#job`, `#ticket`, `#status-badge`, `#device`, `#customer`; "Take photo" → `button#take-photo` disabled with "Photo upload coming soon"; fake uploaded thumbnails and upload progress removed; non-functional menu button removed; "Done" is a link (`#done`) |
+| `Saved.dc.html` | *(not built)* | Replaced by `job.html?new=1`. File left in place until deletion is confirmed (Phase 5). |
+
+All pages: `<meta name="viewport">`, `<title>` "Page · ET Computers", stylesheet link, one
+`<script type="module" src="/js/<page>.js">` in `<head>`; sidebar links point to the new names;
+"[Technician name]" → `#user-name` / `#user-initial` (filled from the session); role "Admin" → "Staff"
+(no role data available).
+
+Page scripts renamed: `Main.js` → `dashboard.js`, `Login.js` → `login.js`, `Intake.js` → `intake.js`,
+`Job.js` → `job.js`, `Phone.js` → `photos.js` (all still empty). `Saved.js` and `index.js` are
+unused and left until deletion is confirmed.
+
+### Copy removed (notifications not built)
+- Intake: hint "SMS updates go to this number"; hint "If given, email updates are sent too";
+  "When you register" step 02 (customer gets SMS/email); the QR step is renumbered to 02.
+- Job: "Changing this date sends the customer an SMS with the new date."; status notes now read
+  "Waiting on parts or the customer." (On Hold) and "Device is ready for pickup." (Completed).
+- Saved page "Customer notified" block (page not carried over).
+
+### Open questions
+- Sidebar "All jobs" pointed at the job-detail mock. It now links to the dashboard (same as
+  "Dashboard"); it could become the Delivered/history view later.
+- Intake defaults: device type defaults to Laptop (as in the design). Condition rows have **no**
+  default, so staff must actively choose each one; the design's pre-selected values were sample data.
