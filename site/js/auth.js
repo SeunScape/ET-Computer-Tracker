@@ -1,6 +1,6 @@
 // Shared login/session/API module. Every page imports from here.
 import { Amplify } from "aws-amplify";
-import { signIn, signOut, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
+import { signIn, signOut, getCurrentUser, fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
 const env = import.meta.env;
 const missing = ["VITE_API_URL", "VITE_USER_POOL_ID", "VITE_USER_POOL_CLIENT_ID"].filter((k) => !env[k]);
@@ -63,6 +63,17 @@ export async function requireLogin() {
     if (event.persisted) getCurrentUser().catch(goToLogin);
   });
   return user;
+}
+
+/** Name to show in the sidebar: the Cognito `name`/`given_name` attribute, else the sign-in email. */
+export async function displayName(user) {
+  const fallback = user?.signInDetails?.loginId || user?.username || "";
+  try {
+    const attrs = await fetchUserAttributes();
+    return attrs.name || attrs.given_name || attrs.email || fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 /** On the login page: go straight to the app if a session already exists. */

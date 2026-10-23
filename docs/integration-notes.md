@@ -191,3 +191,42 @@ unused and left until deletion is confirmed.
 - 24 assertions on `format.js`/`labels.js` (Lagos midnight boundary, invalid dates, phone formats).
 - 17 scenarios on `auth.js` with Amplify stubbed and `fetch` mocked (200/201, 400, 404 empty body,
   409, 502 HTML body, network failure, 401, no token, login errors/challenge/redirects, logout offline).
+
+## Phase 4 – Page integration (2026-10-23)
+
+New shared module `js/layout.js`: `$`, `el()` (createElement + textContent only), `showError`,
+`setBusy` (disables a button and swaps its label while a request runs), `initSidebar` (user name
+from Cognito `name`/`given_name`/email, avatar initial, Log out). `auth.js` gained `displayName()`.
+New dependency: `qrcode`.
+
+| Page | Wired |
+|---|---|
+| Login | `redirectIfSignedIn()` on load; form → `login()`; errors in `#error`; button disabled while signing in; returns to `?next=` |
+| Dashboard | `GET /jobs` → rows + four counts; chips and stat cards → `GET /jobs?status=X` (active one highlighted; clicking the active card returns to All); "Load more" with `cursor`; search → `GET /search?q=` with the "Type at least 2 characters" hint (no API call); clearing search restores All; rows link to `job.html?ticket=` (encoded); masked phone; Lagos dates; overdue = promised date before today and Under Repair/On Hold → red text + "· overdue"; "No jobs found"; loading and error rows; stale responses ignored when filters are clicked quickly |
+| Intake | Live arrival time; `promisedDate.min = todayInLagos()`; Desktop → touchpad N/A; `POST /jobs` with codes, optional fields omitted when empty; `400` → server message in `#error`, all input kept; Register disabled while sending (one job per double-click); success → `location.replace("job.html?ticket=…&new=1")` |
+| Job | `GET /jobs/{ticket}` fills every section; full phone as `tel:` link; history newest first in sentences with Lagos time and who; missing/unknown ticket → "Job not found" + dashboard link; Save → `PATCH` with `version` + changed fields only; re-render from the response; `409` → reload + "This job was updated by someone else. The latest version has been loaded."; `new=1` → "Device registered as ETC-XXXX. Write the ticket number on the device tag." (no notification wording), QR opened, `new=1` removed from the URL; QR (qrcode → canvas) to `${location.origin}/photos.html?ticket=…` |
+| Photos | Loads job; shows ticket, status, device, customer · reported fault; upload button disabled "Photo upload coming soon"; Done → job page; unknown ticket → "Job not found." |
+
+**QR codes and localhost:** the QR encodes `location.origin`, so during development it points at
+`http://localhost:5173`, which a phone cannot open. It only works from a phone once the site is
+hosted (Part E2), or in dev with `npx vite --host` and the PC's LAN address.
+
+### Deviations from the plan
+- **PATCH sends only changed fields** (plus `version`) instead of always all three, so the history
+  only records real changes. "No changes to save." is shown without calling the API.
+- **"Load more" appears for any status filter** that returns a `cursor`, not only Delivered.
+- **History wording** depends on `activity[].type`, which C.3 does not list. `job.js` recognises
+  types containing CREATE/REGISTER, STATUS, DIAGNOS, PROMISED and PHOTO, and falls back to the
+  type name in words ("SOMETHING_ELSE" → "Something else"). **Check against the Lambda's real type
+  names in Phase 6.**
+- After registering, Back skips the filled-in intake form (`location.replace`) to avoid accidental
+  duplicate registrations.
+- Network failure during `POST /jobs` shows the connection message; the job may or may not have
+  been created, so staff should check the dashboard before retrying.
+
+### Mock end-to-end test (no AWS)
+Chrome (Playwright) against the Vite dev server with Amplify replaced by a stub and the API by a
+mock implementing C.3 (page size 2 to exercise Load more). Covers walkthrough tests 1–14 plus:
+new-password challenge, already-signed-in redirect, required-field validation, desktop → N/A,
+API 500, network failure, 401 mid-session. Result: **21/21 passed**, no unexpected console errors.
+This verifies the frontend against the contract; it does not replace Phase 6 against the live API.
